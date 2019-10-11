@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.Json;
-using Amazon.Lambda.APIGatewayEvents;
 using System.Net;
-using LambdaNative;
 using MySql.Data.MySqlClient;
 using System.Data;
 using LinqToDB;
@@ -14,50 +12,62 @@ using LinqToDB.Configuration;
 using System.Linq;
 using LinqToDB.Data;
 using Newtonsoft.Json;
+using LambdaNative;
 
 namespace aws_lambda_lambdanative
 {
-    public class Handler : IHandler<APIGatewayProxyRequest, APIGatewayProxyResponse>
+    public class Handler : IHandler<string, List<Member>>
     {
         public ILambdaSerializer Serializer => new Amazon.Lambda.Serialization.Json.JsonSerializer();
 
-        public APIGatewayProxyResponse Handle(APIGatewayProxyRequest request, ILambdaContext context)
+        public List<Member> Handle(string request, ILambdaContext context)
         {
-            string unit_id = null;
-            string lang = "THA";
+            // string unit_id = null;
+            // string lang = "THA";
 
-            if (request.PathParameters != null && request.PathParameters.ContainsKey("unit_id")) {
-                    unit_id = request.PathParameters["unit_id"];
-            }
-            if(request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("lang")) {
-                lang = request.QueryStringParameters["lang"];
-            }
+            // if (request.PathParameters != null && request.PathParameters.ContainsKey("unit_id")) {
+            //         unit_id = request.PathParameters["unit_id"];
+            // }
+            // if(request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("lang")) {
+            //     lang = request.QueryStringParameters["lang"];
+            // }
             
             Console.WriteLine("Log: Start Connection");
 
             DataConnection.DefaultSettings = new MySettings();
 
-            using (var db = new lab())
+            Console.WriteLine("Log: After Connection");
+
+            using (var db = new DBdev())
             {
+                Console.WriteLine("Log: After get DBdev()");
+
                 var query = from m in db.Member
                             orderby m.Id descending
                             select m;
+                
+                Console.WriteLine("Log: After Linq Query");
+
                 List<Member> members = query.ToList();
 
-                APIGatewayProxyResponse respond = new APIGatewayProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.OK,
-                    Headers = new Dictionary<string, string>
-                    {
-                        { "Content-Type", "application/json" },
-                        { "Access-Control-Allow-Origin", "*" },
-                        { "X-Debug-UnitId", unit_id },
-                        { "X-Debug-Lang", lang },
-                    },
-                    Body = JsonConvert.SerializeObject(members)
-                };
+                Console.WriteLine("Log: After query ToList");
 
-                return respond;
+                Console.WriteLine("Log: Count: " + members.Count );
+
+                // APIGatewayProxyResponse respond = new APIGatewayProxyResponse
+                // {
+                //     StatusCode = (int)HttpStatusCode.OK,
+                //     Headers = new Dictionary<string, string>
+                //     {
+                //         { "Content-Type", "application/json" },
+                //         { "Access-Control-Allow-Origin", "*" },
+                //         { "X-Debug-UnitId", unit_id },
+                //         { "X-Debug-Lang", lang },
+                //     },
+                //     Body = JsonConvert.SerializeObject(members)
+                // };
+
+                return members;
             };
         }
     }
@@ -108,9 +118,9 @@ namespace aws_lambda_lambdanative
         }
     }
 
-    public class lab : LinqToDB.Data.DataConnection
+    public class DBdev : LinqToDB.Data.DataConnection
     {
-        public lab() : base("lab") { }
+        public DBdev() : base("DatabaseName") { }
 
         public ITable<Member> Member => GetTable<Member>();
     }

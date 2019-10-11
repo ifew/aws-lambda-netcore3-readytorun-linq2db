@@ -1,4 +1,4 @@
-﻿using Amazon.Lambda.APIGatewayEvents;
+﻿using System.Collections.Generic;
 using aws_lambda_lambdanative;
 
 namespace LambdaNative
@@ -7,7 +7,7 @@ namespace LambdaNative
     {
         public static void Main()
         {
-            LambdaNative.Run<Handler, APIGatewayProxyRequest, APIGatewayProxyResponse>();
+            LambdaNative.Run<Handler, string, List<Member>>();
         }
     }
 }

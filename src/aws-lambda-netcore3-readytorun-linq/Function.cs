@@ -2,15 +2,12 @@ using System;
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.Json;
-using System.Net;
-using MySql.Data.MySqlClient;
-using System.Data;
 using LinqToDB;
+using LinqToDB.Data;
 using LinqToDB.Common;
 using LinqToDB.Mapping;
 using LinqToDB.Configuration;
 using System.Linq;
-using LinqToDB.Data;
 using Newtonsoft.Json;
 using LambdaNative;
 
@@ -38,9 +35,9 @@ namespace aws_lambda_lambdanative
 
             Console.WriteLine("Log: After Connection");
 
-            using (var db = new DBdev())
+            using (var db = new DBConnection())
             {
-                Console.WriteLine("Log: After get DBdev()");
+                Console.WriteLine("Log: After get DBConnection()");
 
                 var query = from m in db.Member
                             orderby m.Id descending
@@ -100,8 +97,8 @@ namespace aws_lambda_lambdanative
     {
         public IEnumerable<IDataProviderSettings> DataProviders => Enumerable.Empty<IDataProviderSettings>();
 
-        public string DefaultConfiguration => "MySQL";
-        public string DefaultDataProvider => "MySQL";
+        public string DefaultConfiguration => "Mysql";
+        public string DefaultDataProvider => "Mysql";
 
         public IEnumerable<IConnectionStringSettings> ConnectionStrings
         {
@@ -110,17 +107,28 @@ namespace aws_lambda_lambdanative
                 yield return
                     new ConnectionStringSettings
                     {
-                        Name = "MySQL",
-                        ProviderName = "MySQL",
+                        Name = "DBConnection",
+                        ProviderName = "MySql",
                         ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
                     };
             }
         }
     }
 
-    public class DBdev : LinqToDB.Data.DataConnection
+    public partial class DBConnection : LinqToDB.Data.DataConnection
     {
-        public DBdev() : base("DatabaseName") { }
+        public DBConnection()
+		{
+			InitDataContext();
+		}
+
+		public DBConnection(string configuration)
+			: base(configuration)
+		{
+			InitDataContext();
+		}
+
+		partial void InitDataContext();
 
         public ITable<Member> Member => GetTable<Member>();
     }

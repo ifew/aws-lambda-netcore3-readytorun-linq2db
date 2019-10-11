@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.Json;
+using Amazon.Lambda.APIGatewayEvents;
 using LinqToDB;
 using LinqToDB.Data;
 using LinqToDB.Common;
@@ -13,21 +14,21 @@ using LambdaNative;
 
 namespace aws_lambda_lambdanative
 {
-    public class Handler : IHandler<string, List<Member>>
+    public class Handler : IHandler<APIGatewayProxyRequest, APIGatewayProxyResponse>
     {
         public ILambdaSerializer Serializer => new Amazon.Lambda.Serialization.Json.JsonSerializer();
 
-        public List<Member> Handle(string request, ILambdaContext context)
+        public APIGatewayProxyResponse Handle(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            // string unit_id = null;
-            // string lang = "THA";
+            string unit_id = null;
+            string lang = "THA";
 
-            // if (request.PathParameters != null && request.PathParameters.ContainsKey("unit_id")) {
-            //         unit_id = request.PathParameters["unit_id"];
-            // }
-            // if(request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("lang")) {
-            //     lang = request.QueryStringParameters["lang"];
-            // }
+            if (request.PathParameters != null && request.PathParameters.ContainsKey("unit_id")) {
+                unit_id = request.PathParameters["unit_id"];
+            }
+            if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("lang")) {
+                lang = request.QueryStringParameters["lang"];
+            }
             
             Console.WriteLine("Log: Start Connection");
 
@@ -51,20 +52,20 @@ namespace aws_lambda_lambdanative
 
                 Console.WriteLine("Log: Count: " + members.Count );
 
-                // APIGatewayProxyResponse respond = new APIGatewayProxyResponse
-                // {
-                //     StatusCode = (int)HttpStatusCode.OK,
-                //     Headers = new Dictionary<string, string>
-                //     {
-                //         { "Content-Type", "application/json" },
-                //         { "Access-Control-Allow-Origin", "*" },
-                //         { "X-Debug-UnitId", unit_id },
-                //         { "X-Debug-Lang", lang },
-                //     },
-                //     Body = JsonConvert.SerializeObject(members)
-                // };
+                APIGatewayProxyResponse respond = new APIGatewayProxyResponse
+                {
+                    StatusCode = 200,
+                    Headers = new Dictionary<string, string>
+                    {
+                        { "Content-Type", "application/json" },
+                        { "Access-Control-Allow-Origin", "*" },
+                        { "X-Debug-UnitId", unit_id },
+                        { "X-Debug-Lang", lang },
+                    },
+                    Body = JsonConvert.SerializeObject(members)
+                };
 
-                return members;
+                return respond;
             };
         }
     }

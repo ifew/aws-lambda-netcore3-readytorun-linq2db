@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
-using Amazon.Lambda.Serialization.Json;
 using Amazon.Lambda.APIGatewayEvents;
 using LinqToDB;
 using LinqToDB.Data;
@@ -9,8 +8,8 @@ using LinqToDB.Common;
 using LinqToDB.Mapping;
 using LinqToDB.Configuration;
 using System.Linq;
-using Newtonsoft.Json;
 using LambdaNative;
+using System.Text.Json;
 
 namespace aws_lambda_lambdanative
 {
@@ -30,27 +29,27 @@ namespace aws_lambda_lambdanative
                 lang = request.QueryStringParameters["lang"];
             }
             
-            Console.WriteLine("Log: Start Connection");
+            context.Logger.LogLine("Log: Start Connection");
 
             DataConnection.DefaultSettings = new MySettings();
 
-            Console.WriteLine("Log: After Connection");
+            context.Logger.LogLine("Log: After Connection");
 
             using (var db = new DBConnection())
             {
-                Console.WriteLine("Log: After get DBConnection()");
+                context.Logger.LogLine("Log: After get DBConnection()");
 
                 var query = from m in db.Member
                             orderby m.Id descending
                             select m;
                 
-                Console.WriteLine("Log: After Linq Query");
+                context.Logger.LogLine("Log: After Linq Query");
 
                 List<Member> members = query.ToList();
 
-                Console.WriteLine("Log: After query ToList");
+                context.Logger.LogLine("Log: After query ToList");
 
-                Console.WriteLine("Log: Count: " + members.Count );
+                context.Logger.LogLine("Log: Count: " + members.Count );
 
                 APIGatewayProxyResponse respond = new APIGatewayProxyResponse
                 {
@@ -62,7 +61,7 @@ namespace aws_lambda_lambdanative
                         { "X-Debug-UnitId", unit_id },
                         { "X-Debug-Lang", lang },
                     },
-                    Body = JsonConvert.SerializeObject(members)
+                    Body = System.Text.Json.JsonSerializer.Serialize<List<Member>>(members)
                 };
 
                 return respond;
